@@ -33,9 +33,21 @@ app.get('/api/config/gemini', (req, res) => {
 
 // Start the Server locally (Conditional for Vercel)
 if (process.env.NODE_ENV !== 'production') {
-    app.listen(PORT, async () => {
+    const server = app.listen(PORT, () => {
         console.log(`🚀 KisanSetu Backend running on http://localhost:${PORT}`);
         console.log(`🔗 Connected to Supabase Cloud for Data & Auth.`);
+    });
+
+    server.on('error', (err) => {
+        if (err.code === 'EADDRINUSE') {
+            const nextPort = parseInt(PORT) + 1;
+            console.log(`⚠️ Port ${PORT} is busy, automatically trying port ${nextPort}...`);
+            app.listen(nextPort, () => {
+                console.log(`🚀 KisanSetu Backend started on fallback port: http://localhost:${nextPort}`);
+            });
+        } else {
+            console.error("Server Error:", err);
+        }
     });
 }
 

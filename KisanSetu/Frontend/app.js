@@ -307,7 +307,8 @@ function syncPendingOfflineData() {
 // ── Screen navigation ─────────────────────────────────────────────────────────
 function goToScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(screenId).classList.add('active');
+    const target = document.getElementById(screenId);
+    if (target) target.classList.add('active');
 }
 window.goToScreen = goToScreen;
 
@@ -894,10 +895,6 @@ async function handleLoginOTP() {
     sessionStorage.setItem('kisansetu_user_name', userData.full_name);
     startSessionTimer();
 
-    // [FR-7.1 / FR-7.2] Log login notification — non-blocking
-
-
-    // [FR-1.3 / 1.4 / 1.5 / 1.6] Route to correct role-based dashboard
     routeByRole(userData.role, userData.full_name);
 }
 window.handleLoginOTP = handleLoginOTP;

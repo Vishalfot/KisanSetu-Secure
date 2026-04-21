@@ -197,7 +197,11 @@ async function saveToDatabase(produceData) {
 
     } catch (err) {
         console.error('Save error:', err);
-        alert('Failed to save listing: ' + err.message);
+        let errorMsg = err.message;
+        if (errorMsg.includes('bucket not found') || errorMsg.includes('Bucket not found') || errorMsg.includes('does not exist')) {
+            errorMsg = 'Image Upload requires a "produce-images" bucket in your Supabase storage. Please create it and set it to public.';
+        }
+        alert('Failed to save listing: ' + errorMsg);
         submitBtn.innerHTML = originalHtml;
         submitBtn.disabled = false;
     }

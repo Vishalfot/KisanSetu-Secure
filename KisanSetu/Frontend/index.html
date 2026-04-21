@@ -213,6 +213,13 @@
     <script type="module" src="app.js"></script>
 
     <script>
+        // --- Navigation Logic (Global Scope) ---
+        function goToScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
         // Voice button handler — delegates to startVoiceLogin set on window by app.js module
         function handleVoiceBtn() {
             if (typeof window.startVoiceLogin === 'function') {
