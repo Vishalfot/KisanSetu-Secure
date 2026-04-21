@@ -9,21 +9,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
-    <script>
-        // --- Navigation Logic (Global Scope - Early Load) ---
-        function goToScreen(screenId) {
-            console.log('Navigating to:', screenId);
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-        }
-
-        // Placeholders to prevent errors if clicked before app.js loads
-        window.handleLogin = function() { console.warn('Still loading auth module...'); };
-        window.handleLoginOTP = function() { console.warn('Still loading auth module...'); };
-    </script>
-
     <style>
         /* ── Connectivity Indicator ── */
         #connectivity-indicator {
@@ -76,9 +61,17 @@
         }
 
         @keyframes micPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.5); }
-            70%  { box-shadow: 0 0 0 12px rgba(211, 47, 47, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(211, 47, 47, 0); }
+            0% {
+                box-shadow: 0 0 0 0 rgba(211, 47, 47, 0.5);
+            }
+
+            70% {
+                box-shadow: 0 0 0 12px rgba(211, 47, 47, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(211, 47, 47, 0);
+            }
         }
 
         .voice-hint {
@@ -140,8 +133,7 @@
                     onclick="goToScreen('login-screen')">
                     <i class="fa-solid fa-right-to-bracket" style="margin-right: 8px;"></i>Login
                 </button>
-                <button class="accent-btn full-width"
-                    onclick="window.location.href='registration.html'">
+                <button class="accent-btn full-width" onclick="window.location.href='registration.html'">
                     <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i>Register
                 </button>
             </div>
@@ -158,11 +150,10 @@
             <div class="input-group">
                 <input type="email" id="email-input" placeholder="Registered Email Address">
             </div>
-               
+
             <div class="input-group">
                 <input type="password" id="password-input" placeholder="Password">
             </div>
-
 
             <button class="accent-btn full-width" onclick="handleLogin()">
                 <i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i>Secure Login
@@ -225,18 +216,77 @@
 
     </div>
 
-    <script type="module" src="app.js"></script>
-
+    <!--
+        CRITICAL FIX: goToScreen, handleLogin, handleLoginOTP, moveToNext, selectRole
+        must ALL be defined as plain (non-module) globals BEFORE app.js loads.
+        app.js is type="module" which is deferred — onclick handlers fire before it runs.
+        This synchronous script guarantees these functions exist immediately.
+    -->
     <script>
-        // Voice button handler — delegates to startVoiceLogin set on window by app.js module
-        function handleVoiceBtn() {
+        // ── Core navigation — always available synchronously ──────────────────
+        function goToScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+        }
+        window.goToScreen = goToScreen;
+
+        // ── Stubs replaced by app.js once it loads ────────────────────────────
+        window.handleLogin = function () {
+            console.warn('[KisanSetu] app.js not yet loaded — retrying in 500ms...');
+            setTimeout(function () {
+                if (typeof window._handleLogin === 'function') {
+                    window._handleLogin();
+                } else {
+                    alert('App is still loading. Please wait a moment and try again.');
+                }
+            }, 500);
+        };
+
+        window.handleLoginOTP = function () {
+            console.warn('[KisanSetu] app.js not yet loaded — retrying in 500ms...');
+            setTimeout(function () {
+                if (typeof window._handleLoginOTP === 'function') {
+                    window._handleLoginOTP();
+                } else {
+                    alert('App is still loading. Please wait a moment and try again.');
+                }
+            }, 500);
+        };
+
+        window.moveToNext = function (current) {
+            if (current.value.length >= current.maxLength) {
+                const next = current.nextElementSibling;
+                if (next && next.tagName === 'INPUT') next.focus();
+            }
+            if (current.value.length === 0) {
+                const prev = current.previousElementSibling;
+                if (prev && prev.tagName === 'INPUT') prev.focus();
+            }
+        };
+
+        window.selectRole = function (roleName) {
+            const routes = {
+                'Farmer': 'farmer/farmer_dashboard.html',
+                'Buyer': 'buyer/buyer_dashboard.html',
+                'Administrator': 'admin/admin_dashboard.html',
+                'Equipment Owner': 'equipmentOwner/manage_fleet.html'
+            };
+            if (routes[roleName]) window.location.href = routes[roleName];
+        };
+
+        window.handleVoiceBtn = function () {
             if (typeof window.startVoiceLogin === 'function') {
                 window.startVoiceLogin();
             } else {
                 alert('Voice commands are not available in this browser.\nPlease use Chrome or Edge.');
             }
-        }
+        };
     </script>
+
+    <!-- app.js loads as ES module (deferred) — it overwrites the stubs above -->
+    <script type="module" src="app.js"></script>
 
 </body>
 
