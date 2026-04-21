@@ -6,7 +6,7 @@
       "use": "@vercel/node"
     },
     {
-      "src": "Frontend/**",
+      "src": "Frontend/**/*",
       "use": "@vercel/static"
     }
   ],
@@ -14,18 +14,6 @@
     {
       "src": "/api/(.*)",
       "dest": "/server.js"
-    },
-    {
-      "src": "/Frontend/(.*)",
-      "dest": "/Frontend/$1"
-    },
-    {
-      "src": "/(.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|html|json|woff|woff2|ttf))",
-      "dest": "/Frontend/$1"
-    },
-    {
-      "src": "/",
-      "dest": "/Frontend/index.html"
     },
     {
       "src": "/(.*)",

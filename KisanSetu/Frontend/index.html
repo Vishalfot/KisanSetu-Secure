@@ -8,9 +8,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
-
     <style>
-        /* ── Connectivity Indicator ── */
         #connectivity-indicator {
             position: fixed;
             top: 10px;
@@ -25,7 +23,6 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
         }
 
-        /* ── Voice Button on Language Screen ── */
         .voice-section {
             display: flex;
             flex-direction: column;
@@ -52,7 +49,6 @@
 
         .voice-btn:active {
             transform: scale(0.92);
-            box-shadow: 0 2px 8px rgba(46, 125, 50, 0.3);
         }
 
         .voice-btn.listening {
@@ -89,17 +85,86 @@
             margin-top: 2px;
         }
     </style>
+
+    <!--
+        STEP 1 — Define ALL global functions synchronously, before anything else loads.
+        These run instantly when the browser parses the <head>.
+        app.js (type="module") is deferred — it overwrites these once loaded.
+    -->
+    <script>
+        // ── Navigation — works immediately, no module needed ──
+        function goToScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(function (s) {
+                s.classList.remove('active');
+            });
+            var target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+        }
+
+        // ── Stubs that queue calls until app.js module is ready ──
+        var _appReady = false;
+        var _pendingCalls = [];
+
+        function _callWhenReady(fnName, args) {
+            if (_appReady && typeof window['_app_' + fnName] === 'function') {
+                window['_app_' + fnName].apply(null, args);
+            } else {
+                _pendingCalls.push({ fn: fnName, args: args });
+            }
+        }
+
+        function handleLogin() { _callWhenReady('handleLogin', []); }
+        function handleLoginOTP() { _callWhenReady('handleLoginOTP', []); }
+        function selectRole(r) { _callWhenReady('selectRole', [r]); }
+
+        function moveToNext(current) {
+            if (current.value.length >= current.maxLength) {
+                var next = current.nextElementSibling;
+                if (next && next.tagName === 'INPUT') next.focus();
+            }
+            if (current.value.length === 0) {
+                var prev = current.previousElementSibling;
+                if (prev && prev.tagName === 'INPUT') prev.focus();
+            }
+        }
+
+        function handleVoiceBtn() {
+            if (typeof window.startVoiceLogin === 'function') {
+                window.startVoiceLogin();
+            } else {
+                alert('Voice commands are not available.\nPlease use Chrome or Edge.');
+            }
+        }
+
+        // Called by app.js once it finishes loading
+        function _markAppReady() {
+            _appReady = true;
+            _pendingCalls.forEach(function (item) {
+                if (typeof window['_app_' + item.fn] === 'function') {
+                    window['_app_' + item.fn].apply(null, item.args);
+                }
+            });
+            _pendingCalls = [];
+        }
+
+        // Make all stubs available globally
+        window.goToScreen = goToScreen;
+        window.handleLogin = handleLogin;
+        window.handleLoginOTP = handleLoginOTP;
+        window.selectRole = selectRole;
+        window.moveToNext = moveToNext;
+        window.handleVoiceBtn = handleVoiceBtn;
+        window._markAppReady = _markAppReady;
+    </script>
 </head>
 
 <body>
-
-    <!-- Connectivity indicator — always visible -->
     <div id="connectivity-indicator">🟢 Online</div>
 
     <div class="app-container">
 
         <!-- Splash Screen -->
-        <div id="splash-screen" class="screen active splash-flex" style="cursor: pointer;"
+        <div id="splash-screen" class="screen active splash-flex" style="cursor:pointer;"
             onclick="goToScreen('language-screen')">
             <img src="images/logo.jpeg" alt="KisanSetu Logo" class="app-logo"
                 onerror="this.src='https://placehold.co/150?text=KisanSetu+Logo'">
@@ -111,14 +176,11 @@
         <div id="language-screen" class="screen">
             <h2 class="screen-title">Choose Language</h2>
             <p class="screen-subtitle">भाषा चुनें</p>
-
             <div class="button-group">
                 <button class="primary-btn">English</button>
                 <button class="secondary-btn">हिंदी (Hindi)</button>
                 <button class="secondary-btn">मराठी (Marathi)</button>
             </div>
-
-            <!-- Voice-First Interface — mic button -->
             <div class="voice-section">
                 <button class="voice-btn" id="voice-btn" onclick="handleVoiceBtn()" title="Tap to speak">
                     <i class="fa-solid fa-microphone"></i>
@@ -126,63 +188,54 @@
                 <p class="voice-hint">🎙️ बोलकर नेविगेट करें &nbsp;|&nbsp; Speak to navigate</p>
                 <p class="voice-commands-tip">Say: "Login" · "Register" · "Farmer" · "Buyer"</p>
             </div>
-
             <div class="auth-group">
                 <p class="auth-prompt">Get Started</p>
-                <button class="primary-btn full-width" style="margin-bottom: 15px;"
-                    onclick="goToScreen('login-screen')">
-                    <i class="fa-solid fa-right-to-bracket" style="margin-right: 8px;"></i>Login
+                <button class="primary-btn full-width" style="margin-bottom:15px;" onclick="goToScreen('login-screen')">
+                    <i class="fa-solid fa-right-to-bracket" style="margin-right:8px;"></i>Login
                 </button>
                 <button class="accent-btn full-width" onclick="window.location.href='registration.html'">
-                    <i class="fa-solid fa-user-plus" style="margin-right: 8px;"></i>Register
+                    <i class="fa-solid fa-user-plus" style="margin-right:8px;"></i>Register
                 </button>
             </div>
         </div>
 
         <!-- Login Screen -->
         <div id="login-screen" class="screen">
-            <img src="images/welcome_banner.png" alt="Welcome Image" class="header-image"
+            <img src="images/welcome_banner.png" alt="Welcome" class="header-image"
                 onerror="this.src='https://placehold.co/300x150?text=Welcome+to+KisanSetu'">
-
             <h2 class="screen-title">Welcome Back</h2>
             <p class="screen-subtitle">Enter your credentials to securely login</p>
-
             <div class="input-group">
                 <input type="email" id="email-input" placeholder="Registered Email Address">
             </div>
-
             <div class="input-group">
                 <input type="password" id="password-input" placeholder="Password">
             </div>
-
             <button class="accent-btn full-width" onclick="handleLogin()">
-                <i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i>Secure Login
+                <i class="fa-solid fa-shield-halved" style="margin-right:8px;"></i>Secure Login
             </button>
         </div>
 
-        <!-- OTP Verification Screen -->
+        <!-- OTP Screen -->
         <div id="otp-screen" class="screen">
             <h2 class="screen-title">Verify Mobile</h2>
             <p class="screen-subtitle">We have sent a 4-digit OTP to your number</p>
-
             <div class="otp-inputs">
                 <input type="text" maxlength="1" class="otp-box" onkeyup="moveToNext(this)">
                 <input type="text" maxlength="1" class="otp-box" onkeyup="moveToNext(this)">
                 <input type="text" maxlength="1" class="otp-box" onkeyup="moveToNext(this)">
                 <input type="text" maxlength="1" class="otp-box" onkeyup="moveToNext(this)">
             </div>
-
             <button class="accent-btn full-width" onclick="handleLoginOTP()">
-                <i class="fa-solid fa-check" style="margin-right: 8px;"></i>Verify &amp; Proceed
+                <i class="fa-solid fa-check" style="margin-right:8px;"></i>Verify &amp; Proceed
             </button>
             <p class="resend-text" onclick="goToScreen('login-screen')">Wrong number? Go back.</p>
         </div>
 
-        <!-- Role Selection Screen (fallback) -->
+        <!-- Role Screen -->
         <div id="role-screen" class="screen">
             <h2 class="screen-title">Who are you?</h2>
             <p class="screen-subtitle">Select your profile to continue</p>
-
             <div class="role-cards">
                 <div class="role-card" onclick="window.location.href='farmer/farmer_dashboard.html'">
                     <img src="https://images.unsplash.com/photo-1605000797499-95a51c5269ae?q=80&w=400&auto=format&fit=crop"
@@ -190,21 +243,18 @@
                     <h3>Farmer</h3>
                     <p>Sell produce &amp; rent equipment</p>
                 </div>
-
                 <div class="role-card" onclick="window.location.href='buyer/buyer_dashboard.html'">
                     <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=400&auto=format&fit=crop"
                         alt="Buyer" onerror="this.src='https://placehold.co/60?text=Buy'">
                     <h3>Buyer</h3>
                     <p>Purchase fresh produce</p>
                 </div>
-
                 <div class="role-card" onclick="selectRole('Equipment Owner')">
                     <img src="images/equipment_owner.png" alt="Equipment"
                         onerror="this.src='https://placehold.co/60?text=Eqp'">
                     <h3>Equipment Owner</h3>
                     <p>Rent out your machinery</p>
                 </div>
-
                 <div class="role-card" onclick="selectRole('Administrator')">
                     <img src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=400&auto=format&fit=crop"
                         alt="Admin" onerror="this.src='https://placehold.co/60?text=Adm'">
@@ -216,78 +266,8 @@
 
     </div>
 
-    <!--
-        CRITICAL FIX: goToScreen, handleLogin, handleLoginOTP, moveToNext, selectRole
-        must ALL be defined as plain (non-module) globals BEFORE app.js loads.
-        app.js is type="module" which is deferred — onclick handlers fire before it runs.
-        This synchronous script guarantees these functions exist immediately.
-    -->
-    <script>
-        // ── Core navigation — always available synchronously ──────────────────
-        function goToScreen(screenId) {
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(s => s.classList.remove('active'));
-            const target = document.getElementById(screenId);
-            if (target) target.classList.add('active');
-        }
-        window.goToScreen = goToScreen;
-
-        // ── Stubs replaced by app.js once it loads ────────────────────────────
-        window.handleLogin = function () {
-            console.warn('[KisanSetu] app.js not yet loaded — retrying in 500ms...');
-            setTimeout(function () {
-                if (typeof window._handleLogin === 'function') {
-                    window._handleLogin();
-                } else {
-                    alert('App is still loading. Please wait a moment and try again.');
-                }
-            }, 500);
-        };
-
-        window.handleLoginOTP = function () {
-            console.warn('[KisanSetu] app.js not yet loaded — retrying in 500ms...');
-            setTimeout(function () {
-                if (typeof window._handleLoginOTP === 'function') {
-                    window._handleLoginOTP();
-                } else {
-                    alert('App is still loading. Please wait a moment and try again.');
-                }
-            }, 500);
-        };
-
-        window.moveToNext = function (current) {
-            if (current.value.length >= current.maxLength) {
-                const next = current.nextElementSibling;
-                if (next && next.tagName === 'INPUT') next.focus();
-            }
-            if (current.value.length === 0) {
-                const prev = current.previousElementSibling;
-                if (prev && prev.tagName === 'INPUT') prev.focus();
-            }
-        };
-
-        window.selectRole = function (roleName) {
-            const routes = {
-                'Farmer': 'farmer/farmer_dashboard.html',
-                'Buyer': 'buyer/buyer_dashboard.html',
-                'Administrator': 'admin/admin_dashboard.html',
-                'Equipment Owner': 'equipmentOwner/manage_fleet.html'
-            };
-            if (routes[roleName]) window.location.href = routes[roleName];
-        };
-
-        window.handleVoiceBtn = function () {
-            if (typeof window.startVoiceLogin === 'function') {
-                window.startVoiceLogin();
-            } else {
-                alert('Voice commands are not available in this browser.\nPlease use Chrome or Edge.');
-            }
-        };
-    </script>
-
-    <!-- app.js loads as ES module (deferred) — it overwrites the stubs above -->
+    <!-- app.js loads as module (deferred by browser) -->
     <script type="module" src="app.js"></script>
-
 </body>
 
 </html>
