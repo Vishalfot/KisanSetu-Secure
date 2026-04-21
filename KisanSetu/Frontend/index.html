@@ -9,6 +9,21 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 
+    <script>
+        // --- Navigation Logic (Global Scope - Early Load) ---
+        function goToScreen(screenId) {
+            console.log('Navigating to:', screenId);
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(s => s.classList.remove('active'));
+            const target = document.getElementById(screenId);
+            if (target) target.classList.add('active');
+        }
+
+        // Placeholders to prevent errors if clicked before app.js loads
+        window.handleLogin = function() { console.warn('Still loading auth module...'); };
+        window.handleLoginOTP = function() { console.warn('Still loading auth module...'); };
+    </script>
+
     <style>
         /* ── Connectivity Indicator ── */
         #connectivity-indicator {
@@ -213,13 +228,6 @@
     <script type="module" src="app.js"></script>
 
     <script>
-        // --- Navigation Logic (Global Scope) ---
-        function goToScreen(screenId) {
-            const screens = document.querySelectorAll('.screen');
-            screens.forEach(s => s.classList.remove('active'));
-            document.getElementById(screenId).classList.add('active');
-        }
-
         // Voice button handler — delegates to startVoiceLogin set on window by app.js module
         function handleVoiceBtn() {
             if (typeof window.startVoiceLogin === 'function') {
